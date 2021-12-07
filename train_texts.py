@@ -32,32 +32,15 @@ print('Number of clusters:.................'+str(args.num_clusters))
 
 # Load data
 if args.dataset == 'eveques':
-    # simulated data
-    # adj, labels = create_simuB(args.num_points, args.num_clusters)  # , oX    args.num_points, args.num_clusters, args.hidden2_dim
-    # load to test edge features
-    # adj = pd.read_csv('C:/Users/Dingge/Downloads/deepLsm/data/eveques_new/ResoEvequesClean2021-A.csv', header=0,
-    #                   sep=';').to_numpy()  # load simu data
-    # labels = np.loadtxt('/home/dliang/deepLsm/label_simu_3clusters.txt')  # load simu labels
-    features, adj, edges = load_data(args.dataset)  # load cora data
+    features, adj, edges = load_data(args.dataset)  # load data
     adj = sp.csr_matrix(adj)
-    features = sp.csr_matrix(features)
 
-    # features = np.zeros((adj.shape[0], args.input_dim))
-    # np.fill_diagonal(features, 1)
-    # features = sp.csr_matrix(features)
-
-    # edges1 = pd.read_csv('C:/Users/Dingge/Downloads/deepLsm/data/Eveques/ResoEvequesClean2021-Ydates.csv', header=0,
-    #                      sep=';').to_numpy()
-    # edges2 = pd.read_csv('C:/Users/Dingge/Downloads/deepLsm/data/Eveques/ResoEvequesClean2021-Yfonctions.csv', header=0,
-    #                      sep=';').to_numpy()
-    # edges3 = pd.read_csv('C:/Users/Dingge/Downloads/deepLsm/data/Eveques/ResoEvequesClean2021-Yregions.csv', header=0,
-    #                      sep=';').to_numpy()
-    # edges = np.array([edges1, edges2, edges3])
-
-    # with open('edges_simu_3clusters_2texts_delta0.4', 'rb') as fp:
-    #     edges = pickle.load(fp)
-    # edges = np.sum(edges, axis=1)  # N * V
-    # features = sp.csr_matrix(edges)  # To test node features
+    if args.use_nodes == True:
+        features = sp.csr_matrix(features)
+    else:
+        features = np.zeros((adj.shape[0], args.input_dim))
+        np.fill_diagonal(features, 1)
+        features = sp.csr_matrix(features)
 
 # else:
 #     # adj, features, edges = load_data(args.dataset)
@@ -129,17 +112,11 @@ store_loss = torch.zeros(args.num_epoch)
 store_loss1 = torch.zeros(args.num_epoch)
 store_loss2 = torch.zeros(args.num_epoch)
 store_loss3 = torch.zeros(args.num_epoch)
-store_loss4 = torch.zeros(args.num_epoch)
 
-store_A_pred = []
 store_ari = torch.zeros(args.num_epoch)
 
 
-def ELBO_Loss(gamma, pi_k, mu_k, log_cov_k, mu_phi, log_cov_phi, A_pred, P):  # , texts_pred
-    # Loss1 = F.binary_cross_entropy(A_pred.view(-1), adj.to_dense().view(-1))
-    # Loss1 = Loss1 * args.num_points
-    # bce_loss = torch.nn.BCELoss(size_average=False) # calculate the sum
-    # Loss1 = bce_loss(A_pred.view(-1), adj_label.to_dense().view(-1))
+def ELBO_Loss(gamma, pi_k, mu_k, log_cov_k, mu_phi, log_cov_phi, A_pred, P):
 
     OO = adj_label.to_dense()*(torch.log((A_pred/(1. - A_pred)) + 1e-16)) + torch.log((1. - A_pred) + 1e-16)
     ind = np.diag_indices(OO.shape[0])
@@ -153,24 +130,15 @@ def ELBO_Loss(gamma, pi_k, mu_k, log_cov_k, mu_phi, log_cov_phi, A_pred, P):  # 
                               + P*torch.exp(log_cov_phi)[i] / torch.exp(log_cov_k[k])
                               + torch.norm(mu_k[k] - mu_phi[i]) ** 2 / torch.exp(log_cov_k[k]))
 
-    # for k in range(args.num_clusters):
-    #     P = args.hidden2_dim
-    #     KL[:, k] = 0.5 * torch.sum(P * (log_cov_k[k].unsqueeze(0) - log_cov_phi) - P
-    #                                + torch.exp(log_cov_phi) / torch.exp(log_cov_k[k].unsqueeze(0))
-    #                                + torch.sum((mu_k[k].unsqueeze(0) - mu_phi) ** 2, axis=1).unsqueeze(
-    #         1) / torch.exp(log_cov_k[k].unsqueeze(0)), axis=1)
-
     Loss2 = torch.sum(gamma * KL)
 
     Loss3 = torch.sum(gamma * (torch.log(pi_k.unsqueeze(0)) - torch.log(gamma)))
 
-    # Loss4 = - torch.sum(edges * torch.log(texts_pred+1e-40))
+    Loss = Loss1 + Loss2 - Loss3
 
-    Loss = Loss1 + Loss2 - Loss3   #  + Loss4
+    return Loss, Loss1, Loss2, -Loss3
 
-    return Loss, Loss1, Loss2, -Loss3  #  , Loss4
 
-# mu_phi, log_cov_phi, z = model.encoder(features)
 for epoch in range(args.num_epoch):
     t = time.time()
 
@@ -178,13 +146,9 @@ for epoch in range(args.num_epoch):
         #     print('epoch.....................................:', epoch)
     # get mu_phi, log_cov_phi and embeddings
     mu_phi, log_cov_phi, z = model.encoder(features)
-    # emb, y = model.encoder2(edges)
-    # z = torch.FloatTensor(np.loadtxt('C:/Users/Dingge/Downloads/deepLsm/emb_3clusters.txt'))
-    # mu_phi = z
-    # A_pred, out_p = model.decoder(z, y, model.alpha, model.beta)
+
     A_pred = model.decoder(z, edges, model.alpha, model.beta)
 
-    #if epoch == 0 or (epoch + 1) % 1 == 0:
     if epoch < 1 or (epoch + 1) % 1 == 0:
         # update pi_k, mu_k and log_cov_k
         gamma = model.gamma
@@ -205,8 +169,7 @@ for epoch in range(args.num_epoch):
     mu_k = model.mu_k
     gamma = model.gamma
     loss, loss1, loss2, loss3 = ELBO_Loss(gamma, pi_k, mu_k, log_cov_k, mu_phi, log_cov_phi, A_pred, args.hidden2_dim)
-        
-    #if epoch == 0 or (epoch + 1) % 100 == 0:
+
     if epoch > 1:    
         # calculate of ELBO loss
         optimizer.zero_grad()
@@ -232,7 +195,6 @@ for epoch in range(args.num_epoch):
     store_loss1[epoch] = torch.Tensor.item(loss1)
     store_loss2[epoch] = torch.Tensor.item(loss2)
     store_loss3[epoch] = torch.Tensor.item(loss3)
-    # store_loss4[epoch] = torch.Tensor.item(loss4)
 
     gamma = model.gamma.cpu().data.numpy()
     # store_ari[epoch] = torch.tensor(adjusted_rand_score(labels, np.argmax(gamma, axis=1)))  # save ARI
@@ -318,7 +280,7 @@ mean = pca.fit_transform(model.mu_k.cpu().data.numpy())
 f, ax = plt.subplots(1, figsize=(15, 10))
 ax.scatter(out[:, 0], out[:, 1], color=labelC)
 # ax.scatter(mean[:, 0], mean[:, 1], color='black', s=50)
-ax.set_xlabel('PCA result of embeddings of deepLSM (K=13)')
+ax.set_xlabel('PCA result of embeddings of deepLSM (K='+args.num_clusters+')')
 plt.show()
 
 # calculate ARI

@@ -65,8 +65,8 @@ def load_data(dataset):
     # Edges = np.load(path + 'Edges.npy')
 
     if dataset == 'eveques':
-        adjacency = pd.read_csv('C:/Users/Dingge/Downloads/deepLsm/data/eveques_new/ResoEvequesClean2021-A.csv', header=0,
-                          sep=';').to_numpy()  # load simu data
+        adjacency = pd.read_csv('C:/Users/Dingge/Downloads/deepLsm/data/eveques_new/ResoEvequesClean2021-A.csv',
+                                header=0, sep=';').to_numpy()  # load simu data
         features = pd.read_csv('C:/Users/Dingge/Downloads/deepLsm/data/eveques_new/ResoEvequesClean2021-X.csv',
                                header=0, sep=';').to_numpy()
         for i in range(features.shape[0]):

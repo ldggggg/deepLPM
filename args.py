@@ -15,14 +15,18 @@ if dataset == 'simu':
     pre_epoch = 70  # 100(B: delta<0.6) or 70 (B: delta<0.8, C) or 50
 
 elif dataset == 'eveques':
+    use_nodes = False
+    use_edges = False
+    nb_of_edges = 5
+
     num_points = 1287  # N
-    input_dim = 10  # D
+    if use_nodes == True:
+        input_dim = 10  # D
+    else:
+        input_dim = 1287  # D
     hidden1_dim = 64
     hidden2_dim = 16  # 10logK # P
-    num_clusters = 18  # K
-
-    use_edges = True
-    nb_of_edges = 5
+    num_clusters = 2  # K
 
     num_epoch = 1000  # 100
     learning_rate = 2e-3  # 2e-3 (before) or 5e-3 (B: delta<0.4)
@@ -40,9 +44,3 @@ elif dataset == 'cora':
     learning_rate = 2e-3  # 2e-3 or 5e-3 (B: delta<0.4)
     pre_lr = 0.005  # 0.005 (Cora)  # 0.1 (B, C) or 0.2 (A, B: delta<0.4)
     pre_epoch = 100  # 100(B: delta<0.6) or 70 (B: delta<0.8, C) or 50
-
-# num_words = 761  # 1034
-# hidden3_dim = 64  # P
-# nb_of_topics = 3  # 3
-# use_feature = True
-
