@@ -57,4 +57,4 @@ def create_simuB(N, K, delta):
 
     return A, c
 
-A, Label = create_simuB(args.num_points, args.num_clusters, 0.5)
+# A, Label = create_simuB(args.num_points, args.num_clusters, 0.5)

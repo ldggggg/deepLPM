@@ -12,10 +12,13 @@ import matplotlib.pyplot as plt
 from input_data import load_data
 from sklearn.cluster import KMeans
 
+# os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+# device = torch.device('cuda:0')
 
 def glorot_init(input_dim, output_dim):
     init_range = np.sqrt(6.0 / (input_dim + output_dim))
-    initial = torch.rand(input_dim, output_dim) * 2 * init_range - init_range
+    initial = torch.rand(input_dim, output_dim, dtype = torch.float32) * 2 * init_range - init_range
+    # initial = initial.to(device)
     return nn.Parameter(initial)
 
 
@@ -47,7 +50,8 @@ class Encoder(nn.Module):
         self.mean = self.gcn_mean(hidden)  # N * P
         self.logstd = self.gcn_logstddev(hidden)  # N * 1
         gaussian_noise = torch.randn(X.size(0), args.hidden2_dim)
-        # *M*#
+        # gaussian_noise = gaussian_noise.to(device)
+            # *M*#
         sampled_Z = gaussian_noise * torch.exp(self.logstd / 2) + self.mean  # embeddings: N * 
         return self.mean, self.logstd, sampled_Z
 
@@ -77,7 +81,7 @@ class deepLPM(nn.Module):
         # self.encoder2 = EncoderText()
         self.decoder = Decoder()
 
-        self.alpha = nn.Parameter(torch.tensor(0.2), requires_grad=True)  # *M*#
+        self.alpha = nn.Parameter(torch.tensor(0.2, dtype = torch.float32), requires_grad=True)  # *M*#
         self.beta = nn.Parameter(torch.FloatTensor(args.nb_of_edges, ).fill_(1) / args.nb_of_edges, requires_grad=True)
 
         self.gamma = nn.Parameter(torch.FloatTensor(args.num_points, args.num_clusters).fill_(0.1),
@@ -171,27 +175,28 @@ class deepLPM(nn.Module):
     # Functions for the initialization of cluster parameters
     def update_gamma(self, mu_phi, log_cov_phi, pi_k, mu_k, log_cov_k, P):
         det = 1e-16
-        KL = torch.zeros((args.num_points, args.num_clusters))  # N * K
+        KL = torch.zeros((args.num_points, args.num_clusters), dtype = torch.float32)  # N * K
+        # KL = KL.to(device)
         for k in range(args.num_clusters):
             for i in range(args.num_points):
                 KL[i, k] = 0.5 * (P * (log_cov_k[k] - log_cov_phi[i]) - P
                                   + P * torch.exp(log_cov_phi)[i] / torch.exp(log_cov_k[k])
                                   + torch.norm(mu_k[k] - mu_phi[i]) ** 2 / torch.exp(log_cov_k[k]))
 
-        denominator = torch.sum(pi_k.unsqueeze(0) * torch.exp(-KL), axis=1)
+        denominator = torch.sum(pi_k.unsqueeze(0) * torch.exp(-KL), axis=1, dtype = torch.float32)
         for k in range(args.num_clusters):
             self.gamma.data[:, k] = pi_k[k] * torch.exp(-KL[:, k]) / denominator + det
 
     def update_others(self, mu_phi, log_cov_phi, gamma, P):
-        N_k = torch.sum(gamma, axis=0)
+        N_k = torch.sum(gamma, axis=0, dtype = torch.float32)
 
         self.pi_k.data = N_k / args.num_points
 
         for k in range(args.num_clusters):
             gamma_k = gamma[:, k]  # N * 1
-            self.mu_k.data[k] = torch.sum(mu_phi * gamma_k.unsqueeze(1), axis=0) / N_k[k]
+            self.mu_k.data[k] = torch.sum(mu_phi * gamma_k.unsqueeze(1), axis=0, dtype = torch.float32) / N_k[k]
             mu_k = self.mu_k
 
-            diff = P * torch.exp(log_cov_phi) + torch.sum((mu_k[k].unsqueeze(0) - mu_phi) ** 2, axis=1).unsqueeze(1)
-            cov_k = torch.sum(gamma_k.unsqueeze(1) * diff, axis=0) / (P * N_k[k])
+            diff = P * torch.exp(log_cov_phi) + torch.sum((mu_k[k].unsqueeze(0) - mu_phi) ** 2, axis=1, dtype = torch.float32).unsqueeze(1)
+            cov_k = torch.sum(gamma_k.unsqueeze(1) * diff, axis=0, dtype = torch.float32) / (P * N_k[k])
             self.log_cov_k.data[k] = torch.log(cov_k)

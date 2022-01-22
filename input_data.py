@@ -49,51 +49,79 @@ def load_data(dataset):
 
     # return adj, features, edges
 
-    # path = './data/{}/'.format(dataset)
-    #
-    # Features = sp.load_npz(path + 'Features.npz')
-    # Features = Features.toarray()
-    # Features = sp.csr_matrix(Features)
-    #
-    # Labels = sp.load_npz(path + 'Labels.npz')
-    # Labels = Labels.toarray()
-    # Labels = Labels.reshape(Labels.shape[1], 1)
-    #
-    # Adjacency = sp.load_npz(path + 'Adjacency.npz')
-    # Adjacency = Adjacency.toarray()
-    #
-    # Edges = np.load(path + 'Edges.npy')
-
     if dataset == 'eveques':
-        adjacency = pd.read_csv('C:/Users/Dingge/Downloads/deepLsm/data/eveques_new/ResoEvequesClean2021-A.csv',
+        adjacency = pd.read_csv('data/eveques_new/ResoEvequesClean2021-A.csv',
                                 header=0, sep=';').to_numpy()  # load simu data
-        features = pd.read_csv('C:/Users/Dingge/Downloads/deepLsm/data/eveques_new/ResoEvequesClean2021-X.csv',
-                               header=0, sep=';').to_numpy()
-        for i in range(features.shape[0]):
-            if np.isnan(features[i][0]) == True and np.isnan(features[i][1]) == False:
-                features[i][0] = features[i][1]
 
-            elif np.isnan(features[i][0]) == False and np.isnan(features[i][1]) == True:
-                features[i][1] = features[i][0]
+        if args.use_nodes == True:
+            features = pd.read_csv('data/eveques_new/ResoEvequesClean2021-X.csv',
+                                   header=0, sep=';').to_numpy()
+            for i in range(features.shape[0]):
+                if np.isnan(features[i][0]) == True and np.isnan(features[i][1]) == False:
+                    features[i][0] = features[i][1]
 
-            elif np.isnan(features[i][0]) == True and np.isnan(features[i][1]) == True:
-                features[i][0] = features[i][1] = 0
+                elif np.isnan(features[i][0]) == False and np.isnan(features[i][1]) == True:
+                    features[i][1] = features[i][0]
 
-        for i in range(features.shape[0]):
-            if features[i][0] == 0 and features[i][1] == 0:
-                features[i][0] = np.mean(features[:,0])
-                features[i][1] = np.mean(features[:,1])
+                elif np.isnan(features[i][0]) == True and np.isnan(features[i][1]) == True:
+                    features[i][0] = features[i][1] = 0
 
-        min_f = np.min(features[:,0:2])
-        max_f = np.max(features[:,0:2])
-        features[:,0:2] = (features[:,0:2] - min_f)/(max_f - min_f)
+            for i in range(features.shape[0]):
+                if features[i][0] == 0 and features[i][1] == 0:
+                    features[i][0] = np.mean(features[:, 0])
+                    features[i][1] = np.mean(features[:, 1])
 
-        edges_flat = pd.read_csv('C:/Users/Dingge/Downloads/deepLsm/data/eveques_new/ResoEvequesClean2021-Yflat.csv',
+            min_f = np.min(features[:, 0:2])
+            max_f = np.max(features[:, 0:2])
+            features[:, 0:2] = (features[:, 0:2] - min_f) / (max_f - min_f)
+        else:
+            features = np.zeros((adjacency.shape[0], args.input_dim))
+            np.fill_diagonal(features, 1)
+
+        # edges_flat = pd.read_csv('data/eveques_new/ResoEvequesClean2021-Yflat.csv',
+        #                          header=0, sep=';').to_numpy()
+        edges_1 = pd.read_csv('data/eveques_new/ResoEvequesClean2021-Ydates.csv',
                                  header=0, sep=';').to_numpy()
+        edges_2 = pd.read_csv('data/eveques_new/ResoEvequesClean2021-Yfonctions.csv',
+                              header=0, sep=';').to_numpy()
+        edges_3 = pd.read_csv('data/eveques_new/ResoEvequesClean2021-Yregions.csv',
+                              header=0, sep=';').to_numpy()
+
         edges = np.zeros((args.num_points, args.num_points, args.nb_of_edges))
-        pos = np.where(edges_flat != 0)
-        for j in range(len(pos[0])):
-            edges[pos[0][j], pos[1][j], (edges_flat[pos[0][j],pos[1][j]]-1)] = 1
+        # pos = np.where(edges_flat != 0)
+        # for j in range(len(pos[0])):
+        #     edges[pos[0][j], pos[1][j], (edges_flat[pos[0][j],pos[1][j]]-1)] = 1
+
+        # pos_edges_1 = np.where(edges_1 < 0, 0, edges_1)  # keep only positive numbers
+        # new_edges_1 = pos_edges_1 / np.max(pos_edges_1)  # between 0 and 1
+        edges[:, :, 0] = edges_1
+
+        # new_edges_2 = np.where(edges_2 == -1, 0, edges_2)
+        edges[:, :, 1] = edges_2
+
+        # new_edges_3 = np.where(edges_3 == -1, 0, edges_3)
+        edges[:, :, 2] = edges_3
+
+    elif dataset == 'cora':
+        path = './data/{}/'.format(dataset)
+
+        adjacency = sp.load_npz(path + 'Adjacency.npz')
+        adjacency = adjacency.toarray()
+
+        if args.use_nodes == True:
+            features = sp.load_npz(path + 'Features.npz')
+            features = features.toarray()
+            # Features = sp.csr_matrix(Features)
+        else:
+            features = np.zeros((adjacency.shape[0], args.input_dim))
+            np.fill_diagonal(features, 1)
+
+        labels = sp.load_npz(path + 'Labels.npz')
+        labels = labels.toarray()
+        labels = labels.reshape(labels.shape[1], 1)
+
+        edges = np.load(path + 'Edges.npy')
+        edges_1 = np.where(edges == 0, -1, edges)
 
     return features, adjacency, edges  # Labels,
 

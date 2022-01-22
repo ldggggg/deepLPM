@@ -23,12 +23,12 @@ def create_simuC(N, K):
     y3 = np.sqrt(100-x3**2) + np.random.normal(0,0.1,N-2*(N//K))
     y3[c==1] = -y3[c==1]
 
-    # import matplotlib.pyplot as plt
-    # f, ax = plt.subplots(1, figsize=(8, 8))
-    # ax.scatter(x, y, color='#7294d4')
-    # ax.scatter(x2, y2, color='#fdc765')
-    # ax.scatter(x3, y3, color='#869f82')
-    # ax.set_title("Original Embeddings of Scenario C", fontsize=18)
+    import matplotlib.pyplot as plt
+    f, ax = plt.subplots(1, figsize=(8, 8))
+    ax.scatter(x, y, color='#7294d4')
+    ax.scatter(x2, y2, color='#fdc765')
+    ax.scatter(x3, y3, color='#869f82')
+    ax.set_title("Original Embeddings of Scenario C", fontsize=18)
     # f.savefig("C:/Users/Dingge/Desktop/results/emb_orig_C.pdf", bbox_inches='tight')
 
     K1 = np.concatenate((x.reshape(-1,1),y.reshape(-1,1)), axis=1)

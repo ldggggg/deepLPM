@@ -14,9 +14,9 @@ import matplotlib.pyplot as plt
 from input_data import load_data
 from preprocessing import *
 import model_texts
-# from testB import *
+from testB import *
 # from testB2 import *
-# from testC import *
+from testC import *
 import math
 import pickle
 
@@ -27,20 +27,72 @@ from scipy.spatial.distance import pdist, squareform
 import args
 
 # Train on CPU (hide GPU) due to memory constraints
+# os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+# device = torch.device('cuda:0')
+# print(torch.cuda.is_available())
+# print(device)
 os.environ['CUDA_VISIBLE_DEVICES'] = ""
 print('Number of clusters:.................'+str(args.num_clusters))
+
+# import tracemalloc
+# tracemalloc.start()
 
 # Load data
 if args.dataset == 'eveques':
     features, adj, edges = load_data(args.dataset)  # load data
     adj = sp.csr_matrix(adj)
+    features = sp.csr_matrix(features)
 
-    if args.use_nodes == True:
-        features = sp.csr_matrix(features)
-    else:
-        features = np.zeros((adj.shape[0], args.input_dim))
-        np.fill_diagonal(features, 1)
-        features = sp.csr_matrix(features)
+elif args.dataset == 'cora':
+    features, adj, edges = load_data(args.dataset)  # load data
+    adj = sp.csr_matrix(adj)
+    features = sp.csr_matrix(features)
+
+    labels = sp.load_npz('./data/cora/Labels.npz')
+    labels = labels.toarray()
+    labels = labels.squeeze(0)
+
+    labelC = []
+    for idx in range(len(labels)):
+        if labels[idx] == 0:
+            labelC.append('red')
+        elif labels[idx] == 1:
+            labelC.append('green')
+        elif labels[idx] == 2:
+            labelC.append('yellow')
+        elif labels[idx] == 3:
+            labelC.append('purple')
+        elif labels[idx] == 4:
+            labelC.append('grey')
+        elif labels[idx] == 5:
+            labelC.append('pink')
+        else:
+            labelC.append('blue')
+
+elif args.dataset == 'simuB':
+    adj, labels = create_simuB(args.num_points, args.num_clusters, 0.3)
+    features = np.zeros((adj.shape[0], args.input_dim))
+    np.fill_diagonal(features, 1)
+    adj = sp.csr_matrix(adj)
+    features = sp.csr_matrix(features)
+    edges = 0
+
+elif args.dataset == 'simuC':
+    adj, labels = create_simuC(args.num_points, args.num_clusters)
+    features = np.zeros((adj.shape[0], args.input_dim))
+    np.fill_diagonal(features, 1)
+    adj = sp.csr_matrix(adj)
+    features = sp.csr_matrix(features)
+    edges = 0
+
+    labelC = []
+    for idx in range(len(labels)):
+        if labels[idx] == 0:
+            labelC.append('#7294d4')
+        elif labels[idx] == 1:
+            labelC.append('#fdc765')
+        else:
+            labelC.append('#869f82')
 
 # else:
 #     # adj, features, edges = load_data(args.dataset)
@@ -48,23 +100,7 @@ if args.dataset == 'eveques':
 #     labels = labels.squeeze(1).tolist()
 #     adj = sp.coo_matrix(adj)
 #     edges = torch.tensor(edges)
-#
-#     labelC = []
-#     for idx in range(len(labels)):
-#         if labels[idx] == 0:
-#             labelC.append('red')
-#         elif labels[idx] == 1:
-#             labelC.append('green')
-#         elif labels[idx] == 2:
-#             labelC.append('yellow')
-#         elif labels[idx] == 3:
-#             labelC.append('purple')
-#         elif labels[idx] == 4:
-#             labelC.append('grey')
-#         elif labels[idx] == 5:
-#             labelC.append('pink')
-#         else:
-#             labelC.append('blue')
+
 
 # from sparsebm import SBM
 # number_of_clusters = args.num_clusters
@@ -97,9 +133,16 @@ features = torch.sparse.FloatTensor(torch.LongTensor(features[0].astype(float).T
                             torch.Size(features[2]))
 edges = torch.Tensor(edges)
 
+# to GPU
+# adj_norm = adj_norm.to(device)
+# adj_label = adj_label.to(device)
+# features = features.to(device)
+# edges = edges.to(device)
+
 
 # init model and optimizer
 model = getattr(model_texts, args.model)(adj_norm)
+# model.to(device)
 
 model.pretrain(features, adj_label, edges)  # pretraining ari=0.4813
 
@@ -119,11 +162,14 @@ store_ari = torch.zeros(args.num_epoch)
 def ELBO_Loss(gamma, pi_k, mu_k, log_cov_k, mu_phi, log_cov_phi, A_pred, P):
 
     OO = adj_label.to_dense()*(torch.log((A_pred/(1. - A_pred)) + 1e-16)) + torch.log((1. - A_pred) + 1e-16)
+    OO = OO.to('cpu')
     ind = np.diag_indices(OO.shape[0])
     OO[ind[0], ind[1]] = torch.zeros(OO.shape[0])
+    # OO = OO.to(device)
     Loss1 = -torch.sum(OO)
     
     KL = torch.zeros((args.num_points, args.num_clusters))  # N * K
+    # KL = KL.to(device)
     for k in range(args.num_clusters):
         for i in range(args.num_points):
             KL[i, k] = 0.5 * (P*(log_cov_k[k] - log_cov_phi[i]) - P
@@ -138,6 +184,18 @@ def ELBO_Loss(gamma, pi_k, mu_k, log_cov_k, mu_phi, log_cov_phi, A_pred, P):
 
     return Loss, Loss1, Loss2, -Loss3
 
+
+from sklearn.decomposition import PCA
+def visu():
+    pca = PCA(n_components=2, svd_solver='full')
+    out = pca.fit_transform(model.encoder.mean.cpu().data.numpy())
+    mean = pca.fit_transform(model.mu_k.cpu().data.numpy())
+    f, ax = plt.subplots(1, figsize=(15, 10))
+    ax.scatter(out[:, 0], out[:, 1], color=labelC)
+    # ax.scatter(mean[:, 0], mean[:, 1], color='black', s=50)
+    ax.set_title('PCA result of embeddings of deepLSM (K='+str(args.num_clusters)+')', fontsize=18)
+    plt.show()
+    # f.savefig("C:/Users/Dingge/Desktop/results/emb_ARVGA.pdf", bbox_inches='tight')
 
 for epoch in range(args.num_epoch):
     t = time.time()
@@ -184,12 +242,13 @@ for epoch in range(args.num_epoch):
               "train_loss3=", "{:.5f}".format(loss3.item()),
               "time=", "{:.5f}".format(time.time() - t))
 
-    # if (epoch + 1) % 600 == 0:
-    #     f, ax = plt.subplots(1, figsize=(10, 15))
-    #     ax.scatter(model.encoder.mean.cpu().data.numpy()[:, 0], model.encoder.mean.cpu().data.numpy()[:, 1], color=labelC)
-    #     ax.scatter(model.mu_k.cpu().data.numpy()[:, 0], model.mu_k.cpu().data.numpy()[:, 1], color='black', s=50)
-    #     ax.set_title("Embeddings after training!")
-    #     plt.show()
+    if (epoch + 1) % 1000 == 0:
+        visu()
+        # f, ax = plt.subplots(1, figsize=(10, 15))
+        # ax.scatter(model.encoder.mean.cpu().data.numpy()[:, 0], model.encoder.mean.cpu().data.numpy()[:, 1], color=labelC)
+        # ax.scatter(model.mu_k.cpu().data.numpy()[:, 0], model.mu_k.cpu().data.numpy()[:, 1], color='black', s=50)
+        # ax.set_title("Embeddings after training!")
+        # plt.show()
 
     store_loss[epoch] = torch.Tensor.item(loss)  # save train loss for visu
     store_loss1[epoch] = torch.Tensor.item(loss1)
@@ -197,7 +256,7 @@ for epoch in range(args.num_epoch):
     store_loss3[epoch] = torch.Tensor.item(loss3)
 
     gamma = model.gamma.cpu().data.numpy()
-    # store_ari[epoch] = torch.tensor(adjusted_rand_score(labels, np.argmax(gamma, axis=1)))  # save ARI
+    store_ari[epoch] = torch.tensor(adjusted_rand_score(labels, np.argmax(gamma, axis=1)))  # save ARI
 
 
 # plot train loss
@@ -220,7 +279,7 @@ plt.title("Training loss in total")
 
 plt.show()
 
-print('Min loss:', np.min(store_loss.cpu().data.numpy()))
+print('Min loss:', np.min(store_loss.cpu().data.numpy()), 'K='+str(args.num_clusters), str(args.use_nodes)+str(args.use_edges))
 
 # f, ax = plt.subplots(1, figsize=(15, 10))
 # plt.plot(store_loss4.cpu().data.numpy(), color='red')
@@ -228,44 +287,44 @@ print('Min loss:', np.min(store_loss.cpu().data.numpy()))
 # plt.show()
 
 # plot ARI
-# f, ax = plt.subplots(1, figsize=(15, 10))
-# ax.plot(store_ari.cpu().data.numpy(), color='blue')
-# ax.set_title("ARI")
-# plt.show()
+f, ax = plt.subplots(1, figsize=(15, 10))
+ax.plot(store_ari.cpu().data.numpy(), color='blue')
+ax.set_title("ARI")
+plt.show()
 
-labelC = []
-labels = np.argmax(gamma, axis=1)
-for idx in range(len(labels)):
-    if labels[idx] == 0:
-        labelC.append('lightblue')
-    elif labels[idx] == 1:
-        labelC.append('lightgreen')
-    elif labels[idx] == 2:
-        labelC.append('yellow')
-    elif labels[idx] == 3:
-        labelC.append('purple')
-    elif labels[idx] == 4:
-        labelC.append('blue')
-    elif labels[idx] == 5:
-        labelC.append('orange')
-    elif labels[idx] == 6:
-        labelC.append('cyan')
-    elif labels[idx] == 7:
-        labelC.append('red')
-    elif labels[idx] == 8:
-        labelC.append('green')
-    elif labels[idx] == 9:
-        labelC.append('pink')
-    elif labels[idx] == 10:
-        labelC.append('grey')
-    elif labels[idx] == 11:
-        labelC.append('cornflowerblue')
-    elif labels[idx] == 12:
-        labelC.append('darkkhaki')
-    elif labels[idx] == 13:
-        labelC.append('darksalmon')
-    else:
-        labelC.append('gold')
+# labelC = []
+# # labels = np.argmax(gamma, axis=1)
+# for idx in range(len(labels)):
+#     if labels[idx] == 0:
+#         labelC.append('lightblue')
+#     elif labels[idx] == 1:
+#         labelC.append('lightgreen')
+#     elif labels[idx] == 2:
+#         labelC.append('yellow')
+#     elif labels[idx] == 3:
+#         labelC.append('purple')
+#     elif labels[idx] == 4:
+#         labelC.append('blue')
+#     elif labels[idx] == 5:
+#         labelC.append('orange')
+#     elif labels[idx] == 6:
+#         labelC.append('cyan')
+#     elif labels[idx] == 7:
+#         labelC.append('red')
+#     elif labels[idx] == 8:
+#         labelC.append('green')
+#     elif labels[idx] == 9:
+#         labelC.append('pink')
+#     elif labels[idx] == 10:
+#         labelC.append('grey')
+#     elif labels[idx] == 11:
+#         labelC.append('cornflowerblue')
+#     elif labels[idx] == 12:
+#         labelC.append('darkkhaki')
+#     elif labels[idx] == 13:
+#         labelC.append('darksalmon')
+#     else:
+#         labelC.append('gold')
 
 # f, ax = plt.subplots(1, figsize=(10, 15))
 # ax.scatter(model.encoder.mean.cpu().data.numpy()[:, 0], model.encoder.mean.cpu().data.numpy()[:, 1], color=labelC)
@@ -273,33 +332,31 @@ for idx in range(len(labels)):
 # ax.set_title("Embeddings after training!")
 # plt.show()
 
-from sklearn.decomposition import PCA
-pca = PCA(n_components=2, svd_solver='full')
-out = pca.fit_transform(model.encoder.mean.cpu().data.numpy())
-mean = pca.fit_transform(model.mu_k.cpu().data.numpy())
-f, ax = plt.subplots(1, figsize=(15, 10))
-ax.scatter(out[:, 0], out[:, 1], color=labelC)
-# ax.scatter(mean[:, 0], mean[:, 1], color='black', s=50)
-ax.set_xlabel('PCA result of embeddings of deepLSM (K='+args.num_clusters+')')
-plt.show()
-
 # calculate ARI
 # gamma = model.gamma.cpu().data.numpy()
-# print("ARI_gamma:", adjusted_rand_score(labels, np.argmax(gamma, axis=1)))
+print("ARI_gamma:", adjusted_rand_score(labels, np.argmax(gamma, axis=1)))
+# np.savetxt('pred_K='+str(args.num_clusters), np.argmax(gamma, axis=1))
 
 # kmeans = KMeans(n_clusters=args.num_clusters).fit(model.encoder.mean.cpu().data.numpy())
 # labelk = kmeans.labels_
 # print("ARI_embedding:", adjusted_rand_score(labels, labelk))
 
 # import csv
-# file = open("data_k=13_p=16.csv", "w")
+# file = open('data_k='+str(args.num_clusters)+'_p=16_'+str(args.use_nodes)+str(args.use_edges)+'.csv', "w")
 # writer = csv.writer(file)
 # mean = model.encoder.mean.cpu().data.numpy()
 # for w in range(args.num_points):
 #     writer.writerow([w, mean[w][0],mean[w][1],mean[w][2],mean[w][3],mean[w][4],mean[w][5],mean[w][6],mean[w][7],
-#                      mean[w][8], mean[w][9], mean[w][10], mean[w][11], mean[w][12], mean[w][13], mean[w][14],
-#                      mean[w][15], labels[w]])  # mean[w][8],mean[w][9],mean[w][10],mean[w][11],mean[w][12],mean[w][13],mean[w][14],mean[w][15]
+#                      mean[w][8], labels[w]])  # mean[w][8],mean[w][9],mean[w][10],mean[w][11],mean[w][12],mean[w][13],mean[w][14],mean[w][15]
 # file.close()
 #
-# np.savetxt('pos_k=13_p=16.txt', out)
-# np.savetxt('cl_k=13_p=16.txt', labels)
+# np.savetxt('pos_k='+str(args.num_clusters)+'_p=16_'+str(args.use_nodes)+str(args.use_edges)+'.txt', out)
+# np.savetxt('cl_k='+str(args.num_clusters)+'_p=16_'+str(args.use_nodes)+str(args.use_edges)+'.txt', labels)
+
+
+# snapshot = tracemalloc.take_snapshot()
+# top_stats = snapshot.statistics('lineno')
+#
+# print("[ Top 10 ]")
+# for stat in top_stats[:10]:
+#     print(stat)

@@ -17,6 +17,7 @@ import args
 import model
 from testB import *
 from testB2 import *
+from testC import *
 import math
 import pickle
 
@@ -95,9 +96,9 @@ def create_simu(N,K,D):
 #########################################################
 
 # Load data
-if args.dataset == 'simu':
+if args.dataset == 'simuC':
     # simulated data
-    adj, labels = create_simuB(args.num_points, args.num_clusters, 0.3)  # , oX    args.num_points, args.num_clusters, args.hidden2_dim
+    adj, labels = create_simuC(args.num_points, args.num_clusters)  # , oX    args.num_points, args.num_clusters, args.hidden2_dim
     # load to test edge features
     # adj = np.loadtxt('/home/dliang/deepLsm/adj_simu_3clusters.txt')  # load simu data
     # labels = np.loadtxt('/home/dliang/deepLsm/label_simu_3clusters.txt')  # load simu labels
