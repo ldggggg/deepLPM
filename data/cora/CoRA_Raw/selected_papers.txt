@@ -1,0 +1,114 @@
+################ grp 6 (17) #################
+15 31353 cls2=NN deg=19 Hidden Markov Models in Computational Biology: Applications to Protein Modeling http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=0FBE2B7A18F1389DFC8D70400DE05522?doi=10.1.1.48.219&rep=rep1&type=pdf
+42 16819 cls2=PM deg=14 Markov Chain Monte Carlo Convergence Diagnostics: A Comparative Review https://www.jstor.org/stable/2291683?seq=1#metadata_info_tab_contents
+75 4330 cls2=PM deg=40 Hierarchical mixtures of experts and the EM algorithm https://www.cs.toronto.edu/~hinton/absps/hme.pdf
+77 4335 cls2=PM deg=16 A View of the EM Algorithm that Justifies Incremental, Sparse, and Other Variants https://www.cs.toronto.edu/~hinton/absps/emk.pdf
+85 
+158 deg=29 not found
+259
+454 12182 cls2=T deg=23 How to Use Expert Advice https://cesa-bianchi.di.unimi.it/Pubblicazioni/jacm-97a.pdf
+520
+773
+794 82920 cls2=GA deg=23 A Survey of Evolution Strategies http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=C0621A8309F3E0DCA1B7344CE9842C27?doi=10.1.1.42.3375&rep=rep1&type=pdf
+968
+1241 deg=17 not found
+1714
+1911
+2154
+2422
+
+################ grp 5 (23) #################
+67  
+146   
+345 2440 cls2=RL2 deg=31 learning logical relations FROM definitions https://link.springer.com/content/pdf/10.1007/BF00117105.pdf
+379 8224 cls2=T deg=26 An Empirical Comparison of Selection Measures for Decision-Tree Induction https://link.springer.com/content/pdf/10.1007%2FBF00116837.pdf
+427
+431 3231 cls2=T deg=36 Irrelevant Features and the Subset Selection Problem https://ai.stanford.edu/~ronnyk/ml94.pdf
+439
+479
+480
+559
+570
+636 10169 cls2=T deg=21 Learning with Many Irrelevant Features https://www.aaai.org/Papers/AAAI/1991/AAAI91-085.pdf
+639 1272 deg=34 not found
+687  
+911 12576 cls2=GA deg=22 Learning Sequential Decision Rules Using Simulation Models and Competition https://link.springer.com/content/pdf/10.1023/A:1022677607120.pdf 
+966 
+1291 
+1329 
+1334 
+1336 
+1485 
+1570 
+1645 22563 deg=21 not found
+
+################ grp 4 (23) #################
+164 35 cls2=GA deg=168 Genetic Algorithms in Search, Optimization and Machine Learning https://dl.acm.org/doi/10.5555/534133
+220  
+251  
+360  
+428 3229 cls2=NN deg=65 Introduction To The Theory Of Neural Computation (downloaded)
+466  
+539  
+571 2658 cls2=NN deg=19 A New Learning Algorithm for Blind Signal Separation https://proceedings.neurips.cc/paper/1995/file/e19347e1c3ca0c0b97de5fb3b690855a-Paper.pdf
+577 deg=30 not found
+637  
+996 
+1017 
+1137 
+1154 
+1179 
+1219 
+1355 20193 cls2=CB deg=23 The Structure-Mapping Engine: Algorithm and Examples https://reader.elsevier.com/reader/sd/pii/0004370289900775?token=499FB9BC5656409CE1960E68CA8B6CBBB1C29C701F6DF04AFAFAEB70E9F4FF71699DC6852757A1B56B95F2EDCF1DE52C&originRegion=eu-west-1&originCreation=20220302140704
+1521 230879 cls2=NN deg=18 Adaptive Nonlinear PCA Algorithms for Blind Source Separation Without Prewhitening https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=1610871
+1697 
+2176 
+2221 
+2500
+
+################ grp 3 (2) #################
+137 8703 cls2=RL2 deg=19 Theory refinement combining analytical and empirical methods https://reader.elsevier.com/reader/sd/pii/0004370294900280?token=A234A40D1A52E69C2BAA3AEB3F5827A52182E5D9AAB02038F330A766BFFFCB5EFCEBE7CF97F67662E31546FA1FD4792E&originRegion=eu-west-1&originCreation=20220302142206
+1499 1956 cls2=CB deg=12 Inferential Theory of Learning: Developing Foundations for Multistrategy Learning http://www.mli.gmu.edu/papers/91-95/MSL4-ITL.pdf
+
+################ grp 2 (12) #################
+130 35061 cls2=GA deg=15 Evolving Networks: Using the Genetic Algorithm with Connectionist Learning https://nic.schraudolph.org/pubs/BelMcISch92.pdf
+295 4584 cls2=RL1 degree=32 Neuronlike Adaptive Elements That Can Solve Difficult Learning Control Problems https://ieeexplore.ieee.org/abstract/document/6313077 
+478  
+612 deg=44 not found  
+746 19621 cls2=NN deg=33 Self-Organized Formation of Topologically Correct Feature Maps https://www.cnbc.cmu.edu/~tai/nc19journalclubs/Kohonen1982_Article_Self-organizedFormationOfTopol.pdf 
+748 1365 cls2=NN deg=74 Self-Organization and Associative Memory https://link.springer.com/book/10.1007/978-3-642-88163-3
+810 34257 cls2=NN deg=14 A Self-Adjusting Dynamic Logic Module https://axon.cs.byu.edu/papers/martinez_91a
+882 35797 cls2=NN deg=14 Proben1 | A Set of Neural Network Benchmark Problems and Benchmarking Rules (downloaded)
+1551 
+1596 
+1719 
+2424
+
+################ grp 1 (19) #################
+110  
+343  
+416  
+524 887 cls2=GA deg=30 Some Studies in Machine Learning Using the Game of Checkers https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5392560
+553 114 cls2=RL1 deg=42 Learning to act using real-time dynamic programming https://ai.dmi.unibas.ch/research/reading_group/barto-etal-ai1995.pdf
+563  
+566 6213 cls2=RL1 deg=78 Learning to Predict by the Methods of Temporal Differences http://incompleteideas.net/papers/sutton-88-with-erratum.pdf 
+567 6214 cls2=RL1 deg=32 Integrated Architectures for Learning, Planning, and Reacting Based on Approximating Dynamic Programming https://papersdb.cs.ualberta.ca/~papersdb/uploaded_files/paper_p160-sutton.pdf.stjohn
+592  
+641  
+650  
+673 12350 cls2=T deg=21 Cryptographic Limitations on Learning Boolean Formulae and Finite Automata https://www.cis.upenn.edu/~mkearns/papers/cryptojacm.pdf
+ 
+739 
+1004 
+1379 
+1460 
+1528 
+1688 
+2335
+
+
+
+
+
+
+

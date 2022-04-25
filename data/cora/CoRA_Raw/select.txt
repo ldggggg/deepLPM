@@ -1,0 +1,78 @@
+15 31353;paper;AAABH:0.203851,AAAMJ:0.256708,AAAOF:0.211156,AABFU:0.374459,AABHC:0.233503,AABNF:0.311884,AABNG:0.272845,AACRE:0.412088
+models computational applications protein modeling hidden markov biology 
+http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=0FBE2B7A18F1389DFC8D70400DE05522?doi=10.1.1.48.219&rep=rep1&type=pdf
+
+345 2440;paper;AAAOA:0.305593,AAAWN:0.649433,AACLG:0.67366,AADZE:0.758365
+degree=31
+learning logical relations FROM definitions
+https://link.springer.com/content/pdf/10.1007/BF00117105.pdf
+
+431 3231;paper;AAAAV:0.356077,AAAGI:0.442306,AAASH:0.754765,AAASI:0.50371,AACYR:0.585745
+problem selection irrelevant features subset
+https://ai.stanford.edu/~ronnyk/ml94.pdf
+
+454 12182;paper;AAAJV:0.572381,AADEE:0.943456,AADEF:0.824175,AADEG:0.868198
+use warmuth expert advice
+https://cesa-bianchi.di.unimi.it/Pubblicazioni/jacm-97a.pdf
+
+
+###############################################################################
+
+75 4330;paper;AAADB:0.322791,AAAQL:0.421274,AACIY:0.55922,AADAG:0.574147,AAEAA:0.55922
+class=4, degree=40
+algorithm hierarchical EM experts mixtures
+https://www.cs.toronto.edu/~hinton/absps/hme.pdf
+
+164 35;paper;AAABV:0.243326,AAAGW:0.321973,AAAIC:0.312243,AAAMA:0.317923,AAAMZ:0.321973,AAAOA:0.203729
+class=2, degree=168
+algorithms search optimization genetic machine learning (not found)
+
+295 4584;paper;AAAMN:0.18444,AAANR:0.176099,AAAOA:0.122237,AABBB:0.154851,AABXC:0.235058,AACTA:0.267691,AADNU:0.317176,AAEMJ:0.359773,AAEOW:0.296091,AAJZO:0.407485
+class=5, degree=32
+adaptive problems learning control that can elements difficult solve neuronlike
+https://ieeexplore.ieee.org/abstract/document/6313077
+
+428 3229;paper;AAADU:0.290402,AAATA:0.315027,AAAUS:0.430582,AAGWL:0.54945,AAIFK:0.512475,AAINQ:0.679142
+class=3, degree=65
+
+
+746 19621;paper;AAABK:0.302944,AAAFP:0.325073,AACPM:0.410105,AADND:0.382416,AADVE:0.461394,AAGEO:0.513962,AAGEP:0.582122
+class=3, degree=33
+
+748 1365;paper;AAABK:0.530153,AAALP:0.395175,AAAXN:0.748918,AABGK:0.740227
+class=3, degree=74
+
+794 82920;paper;AAABQ:0.148353,AAAFX:0.598403,AABFI:0.610346,AACAD:0.570615
+class=2, degree=23
+
+1355 20193;paper;AAABV:0.291991,AAAMU:0.420345,AABZZ:0.554765,AACGP:0.50133,AAGDK:0.606692
+class=1, degree=23
+
+#########################################################
+
+137 8703;paper;AAANN:0.415845,AAATA:0.315027,AAAWC:0.389082,AAAYW:0.29074,AABDL:0.402016,AAEMB:0.488121
+class=6, degree=19, cls=2
+refinement theory empirical methods combining analytical
+https://www.cs.utexas.edu/~ml/papers/either-aij-94.pdf
+
+433 193352;paper;AAAHR:0.600689,AAAZY:0.560586,AACHU:0.67366,AACXP:0.72469
+class=6, degree=6, cls=4
+path execution limited dual
+http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=C396D2675515E78277448D8E5595903D?doi=10.1.1.525.6782&rep=rep1&type=pdf
+
+
+############################################################
+
+
+
+345 2440;paper;AAAOA:0.305593,AAAWN:0.649433,AACLG:0.67366,AADZE:0.758365
+class=6, degree=31
+
+379 8224;paper;AAABW:0.063877,AAAGI:0.276441,AAAGY:0.259902,AAAWC:0.291811,AABEA:0.237708,AABYC:0.281914,AACKH:0.339141,AACNK:0.266296
+class=7,  degree=26
+
+454 12182;paper;AAAJV:0.572381,AADEE:0.943456,AADEF:0.824175,AADEG:0.868198
+class=7, degree=23
+
+524 887;paper;AAAAS:0.201329,AAAMZ:0.321973,AAAOA:0.203729,AABUT:0.452188,AACUH:0.46993,AADWP:0.599622
+class=2, degree=30

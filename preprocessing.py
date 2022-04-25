@@ -7,6 +7,9 @@ Their preprocessing source was used as-is.
 '''
 import numpy as np
 import scipy.sparse as sp
+from scipy.spatial.distance import pdist, squareform
+from scipy.special import expit
+from scipy.stats import bernoulli
 
 def sparse_to_tuple(sparse_mx):
     if not sp.isspmatrix_coo(sparse_mx):
@@ -24,87 +27,170 @@ def preprocess_graph(adj):
     adj_normalized = adj_.dot(degree_mat_inv_sqrt).transpose().dot(degree_mat_inv_sqrt).tocoo()
     return sparse_to_tuple(adj_normalized)
 
-def mask_test_edges(adj):
-    # Function to build test set with 10% positive links
-    # NOTE: Splits are randomized and results might slightly deviate from reported numbers in the paper.
-    # TODO: Clean up.
+###################### simulated data according to LPCM ###################
+def create_simuA(N, K, delta):
+    mu1 = [0, 0]
+    mu2 = [delta * 1.5, delta * 1.5]
+    mu3 = [-1.5 * delta, delta * 1.5]
+    z_mu = np.concatenate((mu1,mu2,mu3), axis=0)
 
-    # Remove diagonal elements
-    adj = adj - sp.dia_matrix((adj.diagonal()[np.newaxis, :], [0]), shape=adj.shape)
-    adj.eliminate_zeros()
-    # Check that diag is zero:
-    assert np.diag(adj.todense()).sum() == 0
+    sigma1 = [[0.1, 0],[0, 0.1]]
+    sigma2 = [[0.3, 0],[0, 0.3]]
+    sigma3 = [[0.1, 0],[0, 0.1]]
+    z_log_sigma = np.concatenate((sigma1,sigma2,sigma3), axis=0)
 
-    adj_triu = sp.triu(adj)
-    adj_tuple = sparse_to_tuple(adj_triu)
-    edges = adj_tuple[0]
-    edges_all = sparse_to_tuple(adj)[0]
-    print(adj_tuple[2], edges_all)
-    num_test = int(np.floor(edges.shape[0] / 10.))
-    num_val = int(np.floor(edges.shape[0] / 20.))
-    print(edges.shape[0], num_test, num_val)
+    x1 = np.random.multivariate_normal(mu1, sigma1, N//K)
+    x2 = np.random.multivariate_normal(mu2, sigma2, N//K)
+    x3 = np.random.multivariate_normal(mu3, sigma3, N-2*(N//K))
 
-    all_edge_idx = list(range(edges.shape[0]))
-    np.random.shuffle(all_edge_idx)
-    val_edge_idx = all_edge_idx[:num_val]
-    test_edge_idx = all_edge_idx[num_val:(num_val + num_test)]
-    test_edges = edges[test_edge_idx]
-    val_edges = edges[val_edge_idx]
-    train_edges = np.delete(edges, np.hstack([test_edge_idx, val_edge_idx]), axis=0)
+    # import matplotlib.pyplot as plt
+    # f, ax = plt.subplots(1,figsize=(8,8))
+    # ax.scatter(x1[:,0], x1[:,1], color = '#7294d4')
+    # ax.scatter(x2[:,0], x2[:,1], color = '#fdc765')
+    # ax.scatter(x3[:,0], x3[:,1], color = '#869f82')
+    # # ax.scatter(x4[:,0], x4[:,1], color = 'y')
+    # # ax.scatter(x5[:,0], x5[:,1], color = 'purple')
+    # ax.set_title("Original Embeddings of Scenario A (Delta=0.5)", fontsize=18)
+    # plt.show()
 
-    def ismember(a, b, tol=5):
-        rows_close = np.all(np.round(a - b[:, None], tol) == 0, axis=-1)
-        return np.any(rows_close)
+    X = np.concatenate((x1,x2,x3), axis=0)
+    # np.savetxt('emb_3clusters.txt', X)
+    # np.savetxt('mu_3clusters.txt', z_mu)
+    # np.savetxt('cov_3clusters.txt', z_log_sigma)
+    Label1 = np.repeat(0, N//K)
+    Label2 = np.repeat(1, N//K)
+    Label3 = np.repeat(2, N-2*(N//K))
+    Label = np.concatenate((Label1,Label2,Label3), axis=0)
 
-    test_edges_false = []
-    while len(test_edges_false) < len(test_edges):
-        idx_i = np.random.randint(0, adj.shape[0])
-        idx_j = np.random.randint(0, adj.shape[0])
-        if idx_i == idx_j:
-            continue
-        if ismember([idx_i, idx_j], edges_all):
-            continue
-        if test_edges_false:
-            if ismember([idx_j, idx_i], np.array(test_edges_false)):
-                continue
-            if ismember([idx_i, idx_j], np.array(test_edges_false)):
-                continue
-        test_edges_false.append([idx_i, idx_j])
+    dst = pdist(X, 'euclidean')
+    dst = squareform(dst)
 
-    val_edges_false = []
-    while len(val_edges_false) < len(val_edges):
-        idx_i = np.random.randint(0, adj.shape[0])
-        idx_j = np.random.randint(0, adj.shape[0])
-        if idx_i == idx_j:
-            continue
-        if ismember([idx_i, idx_j], edges_all):
-            continue
-        if ismember([idx_i, idx_j], train_edges):
-            continue
-        if ismember([idx_j, idx_i], train_edges):
-            continue
-        if ismember([idx_i, idx_j], val_edges):
-            continue
-        if ismember([idx_j, idx_i], val_edges):
-            continue
-        if val_edges_false:
-            if ismember([idx_j, idx_i], np.array(val_edges_false)):
-                continue
-            if ismember([idx_i, idx_j], np.array(val_edges_false)):
-                continue
-        val_edges_false.append([idx_i, idx_j])
+    alpha = 0.2
+    from scipy.special import expit
+    from scipy.stats import bernoulli
+    A = np.zeros((N, N))
+    for i in range(N-1):
+        for j in range(i+1, N):
+            prob = expit(alpha - dst[i,j])
+            A[i,j] = A[j,i] = bernoulli.rvs(prob, loc=0, size=1)
 
-    assert ~ismember(test_edges_false, edges_all)
-    assert ~ismember(val_edges_false, edges_all)
-    assert ~ismember(val_edges, train_edges)
-    assert ~ismember(test_edges, train_edges)
-    assert ~ismember(val_edges, test_edges)
+    # np.savetxt('adj_simuA_3clusters.txt', A)
+    # np.savetxt('label_simuA_3clusters.txt', Label)
+    # f.savefig("C:/Users/Dingge/Desktop/results/emb_orig_A.pdf", bbox_inches='tight')
 
-    data = np.ones(train_edges.shape[0])
+    return A, Label
 
-    # Re-build adj matrix
-    adj_train = sp.csr_matrix((data, (train_edges[:, 0], train_edges[:, 1])), shape=adj.shape)
-    adj_train = adj_train + adj_train.T
+###################### simulated data according to SBM ###################
+def create_simuB(N, K, delta):
+    Pi = np.zeros((K, K))
+    b = 0.25
+    c = b
+    a = 0.01 + (1-delta) * (b-0.01)
 
-    # NOTE: these edge lists only contain single direction of edge!
-    return adj_train, train_edges, val_edges, val_edges_false, test_edges, test_edges_false
+    Pi[0,0] = a
+    Pi[0,1] = b
+    Pi[0,2] = b
+    Pi[1,0] = b
+    Pi[2,0] = b
+    Pi[1,1] = c
+    Pi[1,2] = a
+    Pi[2,1] = a
+    Pi[2,2] = c
+
+    Rho = [0.1, 0.45, 0.45]
+    # N=5
+    c = np.random.multinomial(1, Rho, size=N)
+    c = np.argmax(c, axis=1)
+
+
+    from scipy.stats import bernoulli
+    A = np.zeros((N, N))
+    for i in range(N-1):
+        for j in range(i+1, N):
+            prob = Pi[c[i], c[j]]
+            A[i,j] = A[j,i] = bernoulli.rvs(prob, loc=0, size=1)
+
+    label = []
+    for idx in range(len(c)):
+        if c[idx] == 0:
+            label.append('#7294d4')
+        elif c[idx] == 1:
+            label.append('#fdc765')
+        # elif labels[idx] == 2:
+        #     labelC.append('yellow')
+        # elif labels[idx] == 3:
+        #     labelC.append('purple')
+        else:
+            label.append('#869f82')
+
+    # np.savetxt('adj_simuB_3clusters.txt', A)
+    # np.savetxt('label_simuB_3clusters.txt', c)
+    print('Delta is................: ', delta)
+    print('Clusters='+str(K))
+
+    return A, c
+
+###################### simulated data according to circle structure ###################
+def create_simuC(N, K):
+
+    x = np.random.uniform(-1,1,N//K)
+    c = np.random.multinomial(1, [0.5,0.5], size=N//K)
+    c = np.argmax(c, axis=1)
+    y = np.sqrt(1 - x**2) + np.random.normal(0,0.1,N//K)
+    y[c==1] = -y[c==1]
+
+    x2 = np.random.uniform(-5,5,N//K)
+    c = np.random.multinomial(1, [0.5,0.5], size=N//K)
+    c = np.argmax(c, axis=1)
+    y2 = np.sqrt(25-x2**2) + np.random.normal(0,0.1,N//K)
+    y2[c==1] = -y2[c==1]
+
+    x3 = np.random.uniform(-10,10,N-2*(N//K))
+    c = np.random.multinomial(1, [0.5,0.5], size=N-2*(N//K))
+    c = np.argmax(c, axis=1)
+    y3 = np.sqrt(100-x3**2) + np.random.normal(0,0.1,N-2*(N//K))
+    y3[c==1] = -y3[c==1]
+
+    import matplotlib.pyplot as plt
+    f, ax = plt.subplots(1, figsize=(8, 8))
+    ax.scatter(x, y, color='#7294d4')
+    ax.scatter(x2, y2, color='#fdc765')
+    ax.scatter(x3, y3, color='#869f82')
+    ax.set_title("Original Embeddings of Scenario C", fontsize=18)
+    # f.savefig("C:/Users/Dingge/Desktop/results/emb_orig_C.pdf", bbox_inches='tight')
+
+    K1 = np.concatenate((x.reshape(-1,1),y.reshape(-1,1)), axis=1)
+    K2 = np.concatenate((x2.reshape(-1,1),y2.reshape(-1,1)), axis=1)
+    K3 = np.concatenate((x3.reshape(-1,1),y3.reshape(-1,1)), axis=1)
+
+    C= np.concatenate((K1,K2,K3), axis=0)
+    # np.savetxt('emb_3clusters.txt', K)
+
+    Label1 = np.repeat(0, N//K)
+    Label2 = np.repeat(1, N//K)
+    Label3 = np.repeat(2, N-2*(N//K))
+    Label = np.concatenate((Label1,Label2,Label3), axis=0)
+
+    dst = pdist(C, 'euclidean')
+    dst = squareform(dst)
+
+    alpha = 0.2
+    A = np.zeros((N, N))
+    for i in range(N - 1):
+        for j in range(i + 1, N):
+            prob = expit(alpha - dst[i,j])
+            A[i,j] = A[j,i] = bernoulli.rvs(prob, loc=0, size=1)
+
+    # np.savetxt('adj_simuC_3clusters.txt', A)
+    # np.savetxt('label_simuC_3clusters.txt', Label)
+
+    # To test LPCM package in R, we need to delete nodes not connected to others
+    # a = np.sum(A, axis=0)
+    # arr = np.delete(A, np.where(a == 0), axis=0)
+    # arr = np.delete(arr, np.where(a == 0), axis=1)
+    # lab = np.delete(Label, np.where(a == 0), axis=0)
+
+    # np.savetxt('adj_simuC_3clusters_LPCM.txt', arr)
+    # np.savetxt('label_simuC_3clusters_LPCM.txt', lab)
+
+    return A, Label
