@@ -17,12 +17,16 @@ firstname.lastname@inria.fr
   address = {New Orleans, US},
 }
 ``` -->
+
+## Citation
+```
 @inproceedings{liang2022deep,
   title={Deep latent position model for node clustering in graphs},
   author={Liang, Dingge and Corneli, Marco and Bouveyron, Charles and Latouche, Pierre},
   booktitle={The 30th European Symposium on Artificial Neural Networks (ESANN 2022)},
   year={2022}
 }
+```
 
 ## Introduction
 
